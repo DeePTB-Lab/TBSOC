@@ -23,3 +23,8 @@ sys.path.append('/yourpath/Wannier_Add_onsite_SOC/lib')
 ### How to use:
   **Please see the tutorial and run it using jupiter-notebook.**
 
+## To do:
+1. add new optimization for fitting parameters. now the optimization process is too naive.
+2. support f-electron.
+3. add feature: spin polarized TB to full SOC (now only works from non-spin polarized TB to full SOC version.) 
+
