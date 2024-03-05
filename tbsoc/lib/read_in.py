@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import re
 import numpy as np
-from const import orb_l_dict, orb_num_dict
-from cal_tools import interpolationkpath
+from .const import orb_l_dict, orb_num_dict
+from .cal_tools import interpolationkpath
 
 
 def read_hr(Filename='wannier90_hr.dat'):
@@ -70,9 +70,9 @@ def read_poscar_wan_in(poscarfile = 'POSCAR',waninfile='wannier90.win'):
     for i in range(len(spec)):
         atoms+=([spec[i]]*int(natom_spec[i]))
     ntot=np.sum(natom_spec)
-    A1=(np.asarray(pos[2].split())).astype(np.float)[0:3]
-    A2=(np.asarray(pos[3].split())).astype(np.float)[0:3]
-    A3=(np.asarray(pos[4].split())).astype(np.float)[0:3]
+    A1=(np.asarray(pos[2].split())).astype(float)[0:3]
+    A2=(np.asarray(pos[3].split())).astype(float)[0:3]
+    A3=(np.asarray(pos[4].split())).astype(float)[0:3]
     Lattice=np.matrix([A1,A2,A3])
     print('successfully reading POSCAR ...')
 

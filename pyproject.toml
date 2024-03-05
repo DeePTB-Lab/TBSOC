@@ -1,0 +1,44 @@
+[tool.poetry]
+name = "tbsoc"
+version = "1.0.0"
+license = "LGPL-3.0"
+description = "A computational method to estimate spin-orbital interaction strength in solid state systems"
+authors = ["Q. Gu <guqq@pku.edu.cn>"]
+readme = "README.md"
+repository = "https://github.com/qqgu/TBSOC"
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+pytest = ">=7.2.0"
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+pyyaml = "*"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=7.2.0"
+numpy = "*"
+scipy = "*"
+matplotlib = "*"
+pyyaml = "*"
+
+
+[tool.poetry.scripts]
+tbsoc = 'tbsoc.__main__:main'
+
+[build-system]
+requires = ["poetry-core", "poetry-dynamic-versioning"]
+build-backend = "poetry_dynamic_versioning.backend"
+
+
+[tool.poetry-dynamic-versioning]
+enable = false
+vcs = "git"
+strict = true
+format-jinja = """
+{%- if distance == 0 -%}
+        {{ serialize_pep440(base) }}
+{%- else -%}
+        {{serialize_pep440(bump_version(base, index=1), dev=timestamp)}}
+{%- endif -%}
+"""

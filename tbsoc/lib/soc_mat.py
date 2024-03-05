@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import numpy as np
-from lm_expand import MapLmSp, MapLpSm, MapLzSz
-from const import Mtrans
-from printmat import printsocmat
+from .lm_expand import MapLmSp, MapLpSm, MapLzSz
+from .const import Mtrans
+from .printmat import printsocmat
 
 LM_Mag_Num_Dict    = {'s':[0], 'p':[-1, 0, 1], 'd':[-2, -1, 0, 1, 2]}
 
