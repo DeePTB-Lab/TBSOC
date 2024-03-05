@@ -40,8 +40,15 @@ Will be available soon.
 
 ### How to use:
   you can run this code using jupiter-notebook and command line.
+  1. For jupiter-notebook, you can see the examples in the examples folder.
+  2. For command line, you can go to the examples folder and run the following command:
+  ```
+    tbsoc addsoc input.json
+  ```
 
-  see the examples in the examples folder.
+where input.json is the input file. you can get the band structure using the input SOC strength lambda.  Lambda can be tuned by fitting the DFT band structure with SOC. But for now this fitting only available in the jupiter-notebook mode
+
+We will add the fitting in the command line mode soon. 
   
   
 ### How to cite:
