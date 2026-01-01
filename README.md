@@ -29,7 +29,7 @@
 
 ### Install via uv (Recommended)
 ```bash
-git clone https://github.com/qqgu/TBSOC.git
+git clone https://github.com/DeePTB-Lab/TBSOC.git
 cd TBSOC
 uv sync
 ```
