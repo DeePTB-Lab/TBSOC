@@ -2,5 +2,5 @@ K-Path for testing
 10
 Line-mode
 Reciprocal
-G 0.0 0.0 0.0
-X 0.5 0.0 0.0
+0.0 0.0 0.0 G
+0.5 0.0 0.0 X

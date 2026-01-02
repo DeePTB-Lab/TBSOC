@@ -13,9 +13,10 @@ def test_read_poscar_wan_in():
     poscar_path = TEST_DIR / "test_data" / "POSCAR"
     win_path = TEST_DIR / "test_data" / "wannier90.win"
 
-    Lattice, atoms, atom_proj, orbitals, orb_num, orb_type = read_poscar_wan_in(
+    Lattice, atoms, coords, atom_proj, orbitals, orb_num, orb_type, orb_labels = read_poscar_wan_in(
         poscarfile=poscar_path, waninfile=win_path
     )
+
 
     # Test Lattice
     expected_lattice = np.array([
@@ -47,6 +48,7 @@ def test_read_KPOINTS():
     """
     kpoints_path = TEST_DIR / "test_data" / "KPOINTS"
     # read_KPOINTS requires a lattice matrix to calculate xpath
+    # Use a simple cubic lattice a=10.0
     lattice = np.array([
         [10.0, 0.0, 0.0],
         [0.0, 10.0, 0.0],
@@ -57,23 +59,32 @@ def test_read_KPOINTS():
         Latt=lattice, kpofile=kpoints_path
     )
 
-    # We have 1 segment with 10 points
-    assert kpath.shape == (10, 3)
-    assert xpath.shape == (10,)
+    # Validate output shapes
+    # KPOINTS file requests 10 points between G and X
+    assert kpath.shape == (10, 3), f"Expected 10 k-points, got {kpath.shape[0]}"
+    assert xpath.shape == (10,), f"Expected 10 x-values, got {xpath.shape[0]}"
 
-    # Check start and end points of the kpath
-    assert np.allclose(kpath[0], [0.0, 0.0, 0.0])
-    assert np.allclose(kpath[-1], [0.5, 0.0, 0.0])
+    # Validate High Symmetry Points (Coordinates)
+    # Start: G (0,0,0)
+    assert np.allclose(kpath[0], [0.0, 0.0, 0.0]), "Start k-point should be G (0,0,0)"
+    # End: X (0.5,0,0) - Note: implementation might be inclusive/exclusive? 
+    # Usually interpolation includes endpoints.
+    assert np.allclose(kpath[-1], [0.5, 0.0, 0.0]), "End k-point should be X (0.5,0,0)"
 
-    # Check symmetry points on xpath
-    # B = 2*pi*inv(A).T. For a diagonal matrix A=aI, B=(2pi/a)I
-    # The distance from G to X is sqrt(((0.5-0)*2pi/10)^2) = 0.1*pi
-    assert len(xsymm) == 2
-    assert np.isclose(xsymm[0], 0.0)
-    assert np.isclose(xsymm[1], 0.1 * np.pi)
+    # Validate X-axis distances (xpath)
+    # Reciprocal lattice vector length for a=10 is b = 2*pi/10 = 0.2*pi
+    # Distance G->X in reciprocal space: |(0.5,0,0)| * b = 0.5 * 0.2*pi = 0.1*pi
+    total_dist = 0.1 * np.pi
+    
+    assert len(xsymm) == 2, "Expected 2 symmetry points (Start and End)"
+    assert np.isclose(xsymm[0], 0.0), "First symmetry point should be at x=0"
+    assert np.isclose(xsymm[1], total_dist), f"Last symmetry point should be at x={total_dist}"
+    assert np.isclose(xpath[-1], total_dist), "Last xpath value should match total distance"
 
-    # Check plot symbols
-    assert plot_sbol == ["G", "X"]
+    # Validate Plot Symbols
+    # Expected: ['G', 'X'] from parsing "0.0 0.0 0.0 ! G" and "0.5 0.0 0.0 ! X"
+    expected_labels = ["G", "X"]
+    assert plot_sbol == expected_labels, f"Expected labels {expected_labels}, got {plot_sbol}"
 
 
 def test_read_EIGENVAL():

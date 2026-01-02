@@ -1,14 +1,10 @@
 {
-    "lambdas":[0.4, 0.1],
-    "posfile":"./POSCAR",
-    "winfile":"./wannier90.win",
-    "hrfile":"./wannier90_hr.dat",
-    "kpfile":"./KPOINTS",
-    "eigfile":"./EIGENVAL",
-    "outdir":"./",
-    "EMIN":-3,
-    "EMAX":3,
+    "lambdas": {
+        "Ta:d": 0.4,
+        "As:p": 0.1
+    },
     "Efermi":6.4553,
-    "fit_emin": -3.0,
-    "fit_emax": 3.0
+    "weight_sigma": 2.0,
+    "EMIN": -15,
+    "EMAX": 10
 }
