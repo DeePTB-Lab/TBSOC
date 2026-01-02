@@ -176,10 +176,10 @@ function App() {
         flexShrink: 0
       }}>
         <div style={{display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0}}>
-             <img src="/logo.png" alt="Logo" style={{height: '28px', width: 'auto'}} />
+             <img src="/logo.png" alt="Logo" style={{height: '48px', width: 'auto'}} />
              {/* App Title */}
              <div style={{fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)', letterSpacing: '-0.02em'}}>
-                TBSOC <span style={{fontWeight: '400', opacity: 0.7}}>Desktop</span>
+                TBSOC
              </div>
              {/* Version Badge */}
              <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '1px 6px', borderRadius: '4px'}}>{appVersion || 'v...'}</span>
