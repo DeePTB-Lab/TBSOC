@@ -155,7 +155,7 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
             <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '10px', color: 'var(--text-secondary)'}}>Fitting Weights</h3>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
             <label>
-                <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>E_Fermi (eV)</span>
+                <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>E_Center (eV)</span>
                     <input type="number" step="0.01" name="Efermi" value={formData.Efermi} onChange={handleChange} />
             </label>
             <label>
