@@ -41,14 +41,17 @@ function App() {
   // Theme State
   const [currentTheme, setCurrentTheme] = useState(localStorage.getItem('theme') || 'Light');
   const [themeConfig, setThemeConfig] = useState(null);
+  
+  // Working Directory State (Lifted from ParameterEditor)
+  const [currentPath, setCurrentPath] = useState('');
 
-  // Load Theme
+  // Initial Data Load
   React.useEffect(() => {
+    // Load Theme
     fetch(`/themes/${currentTheme.toLowerCase()}.json`)
       .then(res => res.json())
       .then(config => {
         setThemeConfig(config);
-        // Apply CSS variables
         if (config.css) {
             Object.entries(config.css).forEach(([key, value]) => {
                 document.documentElement.style.setProperty(key, value);
@@ -57,7 +60,25 @@ function App() {
         localStorage.setItem('theme', currentTheme);
       })
       .catch(err => console.error("Failed to load theme:", err));
+
+    // Load Current Directory
+    fetch('/api/current-directory')
+        .then(res => res.json())
+        .then(data => setCurrentPath(data.path))
+        .catch(console.error);
   }, [currentTheme]);
+
+  const handleOpenFolder = async () => {
+      try {
+          const res = await fetch('/api/choose-directory', { method: 'POST' });
+          const data = await res.json();
+          if (data.path) {
+              setCurrentPath(data.path);
+          }
+      } catch (err) {
+          console.error("Failed to open folder:", err);
+      }
+  };
 
   const handleDataLoaded = () => {
        console.log("Data loaded, updating version");
@@ -136,29 +157,105 @@ function App() {
   return (
     <ErrorBoundary>
     <div className="container" style={{maxWidth: '100%', padding: '20px', height: '100vh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column'}}>
-      <header style={{textAlign: 'center', marginBottom: '1em', flexShrink: 0}}>
-        <h1 style={{margin: '0.2em 0', fontSize: '2em'}}>TBSOC Desktop</h1>
-        <div style={{display: 'flex', justifyContent: 'center', gap: '20px', alignItems: 'center'}}>
-            <p style={{color: '#888', margin: 0}}>Tight-Binding SOC Fitter</p>
-            <div style={{padding: '2px 8px', background: '#333', borderRadius: '4px', fontSize: '0.8rem'}}>
-                Status: <span style={{color: status.includes('Error') ? '#ff6b6b' : '#42d392'}}>{status}</span>
+      <header style={{
+        display: 'flex', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        padding: '0 20px', 
+        height: '60px', 
+        borderBottom: '1px solid var(--border-color)', 
+        background: 'var(--bg-card)', 
+        marginBottom: '20px',
+        flexShrink: 0
+      }}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0}}>
+             {/* App Title */}
+             <div style={{fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)', letterSpacing: '-0.02em'}}>
+                TBSOC <span style={{fontWeight: '400', opacity: 0.7}}>Desktop</span>
+             </div>
+             {/* Version Badge */}
+             <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '1px 6px', borderRadius: '4px'}}>v0.1.0</span>
+        </div>
+        
+        {/* Center: Working Directory */}
+        <div style={{flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minWidth: 0, padding: '0 20px'}}>
+             <div style={{
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 background: 'var(--bg-secondary)', 
+                 padding: '4px 4px 4px 12px', 
+                 borderRadius: '8px', 
+                 border: '1px solid var(--border-color)',
+                 maxWidth: '100%'
+             }}>
+                 <span style={{
+                     fontSize: '0.85rem', 
+                     fontFamily: 'monospace', 
+                     color: 'var(--text-secondary)', 
+                     marginRight: '12px',
+                     whiteSpace: 'nowrap',
+                     overflow: 'hidden',
+                     textOverflow: 'ellipsis',
+                     maxWidth: '400px'
+                  }} title={currentPath}>
+                     {currentPath || "No directory selected"}
+                 </span>
+                 <button 
+                     onClick={handleOpenFolder} 
+                     style={{
+                         whiteSpace: 'nowrap',
+                         padding: '4px 12px',
+                         fontSize: '0.8rem',
+                         background: 'var(--button-bg)',
+                         color: 'var(--button-text)',
+                         border: '1px solid var(--border-color)',
+                         borderRadius: '6px',
+                         cursor: 'pointer',
+                         fontWeight: 500
+                     }}
+                  >
+                     Open Folder
+                 </button>
+             </div>
+        </div>
+
+        <div style={{display: 'flex', alignItems: 'center', gap: '20px', flexShrink: 0}}>
+            {/* Status Indicator */}
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', background: 'var(--bg-secondary)', padding: '4px 10px', borderRadius: '20px'}}>
+                <span style={{
+                    display: 'block', 
+                    width: '8px', 
+                    height: '8px', 
+                    borderRadius: '50%', 
+                    background: status.includes('Error') ? '#ff6b6b' : (status === 'Idle' || status === 'Fitting Completed' ? '#42d392' : '#fbbf24')
+                }}></span>
+                <span style={{color: 'var(--text-main)', fontWeight: 500}}>{status}</span>
             </div>
-            <select 
-                value={currentTheme} 
-                onChange={(e) => setCurrentTheme(e.target.value)}
+            
+            {/* Divider */}
+            <div style={{height: '24px', width: '1px', background: 'var(--border-color)'}}></div>
+            
+            {/* Theme Toggle Button */}
+            <button 
+                onClick={() => setCurrentTheme(currentTheme === 'Light' ? 'Dark' : 'Light')}
+                title={`Switch to ${currentTheme === 'Light' ? 'Dark' : 'Light'} Mode`}
                 style={{
-                    marginLeft: '10px',
-                    padding: '4px 8px',
-                    borderRadius: '4px',
+                    background: 'transparent',
                     border: '1px solid var(--border-color)',
-                    background: 'var(--input-bg)',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
                     color: 'var(--text-main)',
-                    fontSize: '0.9rem'
+                    width: '32px',
+                    height: '32px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.2s ease'
                 }}
             >
-                <option value="Dark">Dark Mode</option>
-                <option value="Light">Light Mode</option>
-            </select>
+                {currentTheme === 'Light' ? '🌚' : '☀️'}
+            </button>
         </div>
       </header>
       
@@ -171,6 +268,7 @@ function App() {
                 externalLambdas={activeLambdas} 
                 isFitting={status.startsWith("Fitting") || status === "Submitting..."}
                 onStopFit={handleStopFit}
+                currentPath={currentPath}
             />
           </div>
           <div style={{flex: 1, minWidth: 0, height: '100%'}}>

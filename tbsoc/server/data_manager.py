@@ -23,6 +23,12 @@ class DataManager:
             return
 
         print("DataManager: Loading data...")
+        # Reset state to prevent mixing data from different folders
+        self.hk_tb_jax = None
+        self.soc_basis_jax = None
+        self.fit_indices = None
+        self.best_offset = 0 # Reset alignment too
+        
         self.data_dict = load_all_data(**config_dict)
         self.config_hash = current_hash
         
@@ -31,7 +37,16 @@ class DataManager:
         print("DataManager: Data loaded and pre-calculated.")
 
     def _precalculate(self, config_dict):
-        initial_full_lambdas = np.array(config_dict.get('lambdas', []))
+        # We need to be careful about matching lengths here too
+        # If config_dict comes from previous session, it might have wrong lambdas
+        input_lambdas = config_dict.get('lambdas', [])
+        expected_len = len(self.orb_labels)
+        
+        if len(input_lambdas) != expected_len:
+             print(f"DataManager Warning: Input lambdas length {len(input_lambdas)} != expected {expected_len}. Using zeros.")
+             initial_full_lambdas = np.zeros(expected_len)
+        else:
+             initial_full_lambdas = np.array(input_lambdas)
         
         fit_indices = np.where(initial_full_lambdas != 0)[0]
         
@@ -133,6 +148,11 @@ class DataManager:
         # lambdas_list is the full list of lambdas from UI
         if self.hk_tb_jax is None: return None
         
+        # Robust check to prevent crashes on system switches
+        if len(lambdas_list) != len(self.orb_labels):
+            print(f"DataManager mismatch: received {len(lambdas_list)} lambdas, expected {len(self.orb_labels)}.")
+            return None
+
         full_lambdas = np.array(lambdas_list)
         
         current_params = full_lambdas[self.fit_indices]

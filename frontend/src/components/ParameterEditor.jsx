@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, isFitting, onStopFit, onDataLoaded }) {
+export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, isFitting, onStopFit, onDataLoaded, currentPath }) {
   const [formData, setFormData] = useState({
     posfile: 'POSCAR',
     winfile: 'wannier90.win',
@@ -12,57 +12,39 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
     lambdas: [0.0, 0.0], 
   });
   
-  const [liveUpdate, setLiveUpdate] = useState(true);
-
-  useEffect(() => {
-      if (externalLambdas && externalLambdas.length > 0) {
-          setFormData(prev => ({ ...prev, lambdas: externalLambdas }));
-      }
-  }, [externalLambdas]);
-  
-  const [files, setFiles] = useState([]);
-  const [currentPath, setCurrentPath] = useState('');
   const [lambdaLabels, setLambdaLabels] = useState([]);
 
-  // Live Tuning Effect: Auto-update preview when lambdas change
+  // Sync external lambdas (Array from Preview, Dict from Fit Result)
+  useEffect(() => {
+      if (!externalLambdas) return;
+      
+      if (Array.isArray(externalLambdas) && externalLambdas.length > 0) {
+           setFormData(prev => ({ ...prev, lambdas: externalLambdas }));
+      } else if (typeof externalLambdas === 'object' && lambdaLabels.length > 0) {
+           // Dictionary: {'Pt:d': 0.34}
+           setFormData(prev => {
+              const currentVals = prev.lambdas;
+              const newLambdas = lambdaLabels.map((label, i) => {
+                  if (externalLambdas[label] !== undefined) {
+                      return externalLambdas[label];
+                  }
+                  return currentVals[i] || 0.0;
+              });
+              return { ...prev, lambdas: newLambdas };
+           });
+      }
+  }, [externalLambdas, lambdaLabels]);
+
+  // Auto-preview when lambdas change (Debounced 300ms)
   useEffect(() => {
     const timer = setTimeout(() => {
-        // Only auto-preview if we have valid data loaded AND live update is enabled
-        if (lambdaLabels.length > 0 && liveUpdate) {
-            // Check if we actually have data to preview
-            // (Avoiding infinite loops or premature calls)
+        // Only run if we have labels (data loaded)
+        if (lambdaLabels.length > 0) {
              handlePreview({ preventDefault: () => {} });
         }
-    }, 150); // Debounce 150ms for smooth slider dragging
+    }, 300); 
     return () => clearTimeout(timer);
-  }, [formData.lambdas, liveUpdate]);
-
-  const refreshFiles = () => {
-      fetch('/api/files')
-        .then(res => res.json())
-        .then(data => {
-            console.log("Files loaded:", data);
-            setFiles(data);
-        })
-        .catch(err => console.error("Failed to load files:", err));
-  };
-
-  useEffect(() => {
-    console.log("ParameterEditor Mounted");
-    // Fetch current directory
-    fetch('/api/current-directory')
-        .then(res => res.json())
-        .then(data => setCurrentPath(data.path))
-        .catch(console.error);
-  }, []);
-
-  // Reload data when currentPath changes (initially established or changed by user)
-  useEffect(() => {
-      if (currentPath) {
-          refreshFiles();
-          handleLoadData();
-      }
-  }, [currentPath]);
+  }, [formData.lambdas]);
 
   const handleLoadData = () => {
     fetch('/api/load-data', { 
@@ -72,10 +54,6 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
     })
     .then(res => res.json())
     .then(data => {
-        if (data.status === 'loaded' && onDataLoaded) {
-             onDataLoaded();
-        }
-        
         if (data.orb_labels && data.orb_labels.length > 0) {
             // Check if labels changed, indicating a new system or file load
             const labelsChanged = JSON.stringify(data.orb_labels) !== JSON.stringify(lambdaLabels);
@@ -90,27 +68,31 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
                      return isS ? 0.0 : 0.2;
                  });
                  
+                 const newFormData = {...formData, lambdas: smartDefaults};
+                 
                  // Reset lambdas to smart defaults
                  setFormData(prev => ({...prev, lambdas: smartDefaults}));
+
+                 // Propagate to parent to ensure VisualizationDashboard has correct lambdas
+                 if (onPreview) {
+                     onPreview(newFormData);
+                 }
             }
+        }
+        
+        if (data.status === 'loaded' && onDataLoaded) {
+             onDataLoaded();
         }
     })
     .catch(console.error);
   };
 
-  const handleOpenFolder = async () => {
-      try {
-          const res = await fetch('/api/choose-directory', { method: 'POST' });
-          const data = await res.json();
-          if (data.path) {
-              setCurrentPath(data.path);
-              refreshFiles(); // Reload files from new directory
-              handleLoadData(); // Reload initial parameters for the new directory
-          }
-      } catch (err) {
-          console.error("Failed to open folder:", err);
+  // Reload data when currentPath changes (prop from parent)
+  useEffect(() => {
+      if (currentPath) {
+          handleLoadData();
       }
-  };
+  }, [currentPath]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -178,41 +160,8 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
 
   return (
     <form className="card" style={{height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', margin: 0}}>
-        <h2 style={{marginTop: 0}}>Configuration</h2>
-
-        {/* Project Folder Selection */}
-        <div style={{marginBottom: '20px', padding: '10px', background: 'var(--bg-secondary)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-            <div style={{overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', marginRight: '10px', flex: 1}}>
-                <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block'}}>Working Directory</span>
-                <span style={{fontFamily: 'monospace', fontSize: '0.9rem'}} title={currentPath}>{currentPath || "Loading..."}</span>
-            </div>
-            <button type="button" onClick={handleOpenFolder} style={{flexShrink: 0, padding: '6px 12px', fontSize: '0.85rem', background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)', borderRadius: '4px', cursor: 'pointer'}}>Open Folder</button>
-        </div>
-        
         <div style={{flex: 1}}>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
-                <div style={{gridColumn: '1 / -1'}}>
-                <h3 style={{fontSize: '1rem', marginTop: '10px', marginBottom: '5px', color: 'var(--text-secondary)'}}>Input Files</h3>
-                </div>
-                
-                <label style={{display: 'block'}}>
-                    <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Wannier90 Win</span>
-                    <input name="winfile" value={formData.winfile} onChange={handleChange} list="files-list"/>
-                </label>
-                <label style={{display: 'block'}}>
-                    <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Wannier90 HR</span>
-                    <input name="hrfile" value={formData.hrfile} onChange={handleChange} list="files-list"/>
-                </label>
-
-                <datalist id="files-list">
-                    {files.map(f => <option key={f.path} value={f.name} />)}
-                </datalist>
-            </div>
-            
-            <div style={{marginTop: '20px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
-            <div style={{gridColumn: '1 / -1'}}>
-                <h3 style={{fontSize: '1rem', marginTop: '0', marginBottom: '5px', color: 'var(--text-secondary)'}}>Parameters</h3>
-                </div>
             <label>
                 <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Fermi Energy (eV)</span>
                     <input type="number" step="0.01" name="Efermi" value={formData.Efermi} onChange={handleChange} />
@@ -224,22 +173,9 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
             </div>
 
             <div style={{marginTop: '20px'}}>
-                <h3 style={{fontSize: '1rem', marginTop: '0', marginBottom: '10px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
-                    <span>
-                        Lambdas (Live Tuning)
-                        <span style={{fontSize: '0.7em', color: 'var(--text-secondary)', marginLeft: '10px'}}>Drag sliders to update plot</span>
-                    </span>
-                    <label style={{display: 'flex', alignItems: 'center', cursor: 'pointer', fontSize: '0.8em', color: 'var(--text-main)'}}>
-                        <input
-                            type="checkbox"
-                            checked={liveUpdate}
-                            onChange={(e) => setLiveUpdate(e.target.checked)}
-                            style={{marginRight: '5px', accentColor: '#42d392'}}
-                        />
-                        Live Update
-                    </label>
-                </h3>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '15px', marginBottom: '15px'}}>
+                 <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '10px', color: 'var(--text-secondary)'}}>Lambdas</h3>
+                
+                <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '15px'}}>
                 {formData.lambdas.map((val, idx) => {
                     const label = lambdaLabels[idx] || `λ${idx}`;
                     // Hide 's' orbitals (SOC is effectively zero)
@@ -247,40 +183,22 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
                     if (isS) return null;
 
                     return (
-                        <div key={idx} style={{background: 'var(--bg-item)', padding: '10px', borderRadius: '6px'}}>
-                            <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
-                                <label style={{fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-main)'}}>
-                                    {label}
-                                </label>
-                                <span style={{fontSize: '0.85rem', fontFamily: 'monospace', color: '#42d392'}}>
-                                    {(typeof val === 'number') ? val.toFixed(3) : '0.000'}
-                                </span>
-                            </div>
-                            
-                            <div style={{display: 'flex', alignItems: 'center', gap: '10px'}}>
-                                {/* Slider for Live Tuning: Range 0 to 2 */}
-                                <input
-                                    type="range"
-                                    min="0.0"
-                                    max="2.0"
-                                    step="0.01"
-                                    value={val}
-                                    onChange={(e) => handleLambdaChange(idx, e.target.value)}
-                                    style={{flex: 1, cursor: 'pointer', accentColor: '#42d392'}}
-                                />
-                                
-                                {/* Number Input for Precision */}
+                        <div key={idx} style={{background: 'var(--bg-item)', padding: '8px 12px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'space-between'}}>
+                             <label style={{fontSize: '0.9rem', fontWeight: '500', color: 'var(--text-main)', marginRight: '10px', minWidth: '60px'}}>
+                                 {label}
+                             </label>
+                             
+                             <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
                                 <input
                                     type="number"
                                     min="0.0"
-                                    step="0.01"
+                                    step="0.001" 
                                     value={val}
                                     onChange={(e) => handleLambdaChange(idx, e.target.value)}
-                                    style={{width: '70px', padding: '4px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--input-bg-subtle)', color: 'var(--text-main)'}}
+                                    style={{flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--input-bg-subtle)', color: 'var(--text-main)'}}
                                 />
-                                
-                                <button type="button" onClick={() => removeLambda(idx)} style={{background: 'none', color: 'var(--text-muted)', fontSize: '1.2em', border: 'none', cursor: 'pointer'}} title="Remove">×</button>
-                            </div>
+                                <button type="button" onClick={() => removeLambda(idx)} style={{background: 'none', color: 'var(--text-muted)', fontSize: '1.2em', border: 'none', cursor: 'pointer', padding: '0 4px'}} title="Remove">×</button>
+                             </div>
                         </div>
                     );
                 })}
