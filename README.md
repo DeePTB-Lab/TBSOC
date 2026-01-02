@@ -23,7 +23,20 @@
 
 ## Installation
 
-### Prerequisites
+### 📦 Install via Pre-built Desktop App (Easiest)
+For users who want to use the GUI without installing Python:
+1. Go to the [**Releases Page**](https://github.com/DeePTB-Lab/TBSOC/releases).
+2. Download the installer for your OS:
+   - **Windows**: `TBSOC-Windows-Installer.exe`
+   - **macOS**: `TBSOC-macOS.dmg`
+3. Run the installer/DMG to set up TBSOC.
+
+> **Note for macOS**: You may need to right-click the app and select 'Open' to bypass security check for unnotarized apps.
+
+### 🐍 Install from Source (For Developers/CLI)
+If you prefer the command line or want to modify the code:
+
+#### Prerequisites
 - Python 3.9+
 - [uv](https://github.com/astral-sh/uv) (Recommended for package management)
 
