@@ -61,7 +61,7 @@ def start_desktop_app():
     time.sleep(1) 
     
     # Create and register window
-    window = webview.create_window('TBSOC Desktop', 'http://127.0.0.1:8000/')
+    window = webview.create_window('TBSOC Desktop', 'http://127.0.0.1:8000/', width=1000, height=600)
     state.window = window
     
     webview.start(debug=False)
