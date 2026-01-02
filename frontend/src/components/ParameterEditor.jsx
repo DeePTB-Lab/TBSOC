@@ -106,16 +106,7 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
     setFormData(prev => ({ ...prev, lambdas: newLambdas }));
   };
 
-  const addLambda = () => {
-    const newLambdaLabels = [...lambdaLabels, `λ${lambdaLabels.length}`];
-    setLambdaLabels(newLambdaLabels);
-    setFormData(prev => ({ ...prev, lambdas: [...prev.lambdas, 0.0] }));
-  };
 
-  const removeLambda = (index) => {
-    const newLambdas = formData.lambdas.filter((_, i) => i !== index);
-    setFormData(prev => ({ ...prev, lambdas: newLambdas }));
-  };
 
   const handlePreview = (e) => {
       e.preventDefault();
@@ -198,13 +189,13 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
                                     onChange={(e) => handleLambdaChange(idx, e.target.value)}
                                     style={{flex: 1, padding: '6px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--input-bg-subtle)', color: 'var(--text-main)'}}
                                 />
-                                <button type="button" onClick={() => removeLambda(idx)} style={{background: 'none', color: 'var(--text-muted)', fontSize: '1.2em', border: 'none', cursor: 'pointer', padding: '0 4px'}} title="Remove">×</button>
+
                              </div>
                         </div>
                     );
                 })}
                 </div>
-                <button type="button" onClick={addLambda} style={{width: '100%', marginTop: '5px', padding: '8px', background: 'var(--button-bg)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', borderRadius: '4px'}}>+ Add λ</button>
+
             </div>
         </div>
 
