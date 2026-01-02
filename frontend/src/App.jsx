@@ -169,6 +169,7 @@ function App() {
         flexShrink: 0
       }}>
         <div style={{display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0}}>
+             <img src="/logo.png" alt="Logo" style={{height: '28px', width: 'auto'}} />
              {/* App Title */}
              <div style={{fontWeight: '700', fontSize: '1.1rem', color: 'var(--text-main)', letterSpacing: '-0.02em'}}>
                 TBSOC <span style={{fontWeight: '400', opacity: 0.7}}>Desktop</span>
