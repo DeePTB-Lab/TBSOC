@@ -1,6 +1,6 @@
 [project]
 name = "tbsoc"
-version = "3.1.0"
+version = "3.1.1"
 description = "A computational method to estimate spin-orbital interaction strength in solid state systems"
 readme = "README.md"
 requires-python = ">=3.9"
