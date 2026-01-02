@@ -6,6 +6,7 @@ import numpy as np
 import re
 from pathlib import Path
 import os
+import sys
 
 # Define the root of the project and the example directories
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -46,8 +47,12 @@ def test_integration_addsoc(example_name, tmp_path):
     # Run the tbsoc addsoc command
     # We use 'python -m tbsoc' to ensure we're running the code from the project.
     # We run in tmp_path because keys like 'posfile' default to './POSCAR'.
-    command = ["python", "-m", "tbsoc", "addsoc", str(input_json_path), "--outdir", str(tmp_path)]
-    result = subprocess.run(command, capture_output=True, text=True, cwd=str(tmp_path))
+    # Ensure correct python interpreter and PYTHONPATH
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(PROJECT_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+    
+    command = [sys.executable, "-m", "tbsoc", "addsoc", str(input_json_path), "--outdir", str(tmp_path)]
+    result = subprocess.run(command, capture_output=True, text=True, cwd=str(tmp_path), env=env)
 
     # Check that the command ran successfully
     assert result.returncode == 0, f"Command failed with error:\n{result.stderr}"
@@ -96,8 +101,12 @@ def test_integration_fit(example_name, tmp_path):
         json.dump(input_data, f, indent=4)
 
     # Run the tbsoc fit command
-    command = ["python", "-m", "tbsoc", "fit", str(input_json_path)]
-    result = subprocess.run(command, capture_output=True, text=True, cwd=str(tmp_path))
+    # Ensure correct python interpreter and PYTHONPATH
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(PROJECT_ROOT) + os.pathsep + env.get("PYTHONPATH", "")
+
+    command = [sys.executable, "-m", "tbsoc", "fit", str(input_json_path)]
+    result = subprocess.run(command, capture_output=True, text=True, cwd=str(tmp_path), env=env)
 
     # Check that the command ran successfully and produced output
     assert result.returncode == 0, f"Command failed with error:\n{result.stderr}"
