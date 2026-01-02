@@ -2,6 +2,7 @@ from tbsoc.entrypoints.loadall import load_all_data
 from tbsoc.lib.soc_mat import get_Hsoc
 from tbsoc.lib.cal_tools import hr2hk
 from tbsoc.entrypoints.fitsoc import build_soc_basis_matrices, find_best_alignment
+from tbsoc.lib.write_hr import write_hr
 import numpy as np
 import jax.numpy as jnp
 import os
@@ -188,3 +189,95 @@ class DataManager:
             print(f"Warning: Alignment/MAE calculation failed: {e}")
             
         return {"bands": eigvals.T.tolist(), "mae": None, "offset": getattr(self, 'best_offset', 0)}
+
+    def save_hr_file(self, lambdas_list):
+        if self.data_dict is None:
+            raise ValueError("Data not loaded")
+            
+        full_lambdas = np.array(lambdas_list)
+        
+        # 1. Calculate SOC onsite matrix
+        # indices are precalculated in _precalculate or we re-derive them
+        fit_indices = np.where(full_lambdas != 0)[0]
+        
+        if len(fit_indices) == 0:
+            h_soc = 0.0 # No soc
+        else:
+            # Re-build soc basis if needed, or assume it's same as current if fit_indices matched?
+            # Safer to rebuild specific to these lambdas OR trust self.soc_basis if structure hasn't changed.
+            # However, self.soc_basis depends on WHICH indices are non-zero.
+            # If user manually changes a lambda from 0 to 0.1, we might need to rebuild basis.
+            # BUT DataManager._precalculate does this. 
+            # Ideally we reuse self.soc_basis_jax if indices match self.fit_indices.
+            # FOR ROBUSTNESS: Let's just calculate the matrix directly using the same logic as fitsoc/precalculate.
+            
+            # Using existing self.soc_basis_jax is fast IF indices match.
+            # If they don't (user unlocked a param?), we might be in trouble if we rely on cached basis.
+            # BUT: In the GUI, 'lambdas_list' comes from the sliders. The indices (which are SOC vs non-SOC) are fixed by the model usually?
+            # Actually, `fit_indices` are just non-zero ones.
+            # Let's use the robust `get_Hsoc` directly if possible, or `build_soc_basis_matrices`.
+            
+            # Actually, the simplest way is to recreate the SOC matrix sum.
+            # We need the basis matrices for ALL orbitals, not just non-zero ones?
+            # `build_soc_basis_matrices` filters by fit_indices.
+            
+            # Let's do this:
+            # We need the full onsite term.
+            pass
+
+        # Robust approach: Calculate full SOC matrix from scratch for given lambdas
+        # This matches `tbsoc.lib.soc_mat.get_Hsoc`? No, get_Hsoc takes one orb.
+        
+        # Let's inspect `build_soc_basis_matrices` in `fitsoc`.
+        # It returns a list of matrices corresponding to `fit_indices`.
+        
+        # If we just want to apply the current `lambdas_list` (which has values for ALL possible params):
+        # We can iterate over non-zero lambdas and add their contribution.
+        
+        # Simpler:
+        Msoc = self.data_dict['Msoc']
+        orbitals = self.data_dict['orbitals'] 
+        orb_type = self.data_dict['orb_type']
+        orb_num = self.data_dict['orb_num']
+        
+        # Retrieve non-zero indices
+        fit_indices = np.where(full_lambdas != 0)[0]
+        
+        if len(fit_indices) == 0:
+            final_hop = self.data_dict['hop_spinor'].copy()
+        else:
+            # We need to construct the BASIS matrices for these fit_indices
+            basis_mats = build_soc_basis_matrices(
+                full_lambdas, fit_indices, 
+                orbitals, orb_type, 
+                orb_num, Msoc
+            )
+            # Then sum them up weighted by lambda
+            # basis_mats is (N_active, N_wan, N_wan)
+            # params is (N_active)
+            active_lambdas = full_lambdas[fit_indices]
+            h_soc_onsite = np.tensordot(active_lambdas, basis_mats, axes=1)
+            
+            # Add to original hopping (copy first)
+            final_hop = self.data_dict['hop_spinor'].copy()
+            
+            # R=0 index
+            indR0 = self.data_dict['indR0']
+            
+            # Add SOC to onsite term
+            # Ensure complex type
+            if final_hop.dtype != complex:
+                final_hop = final_hop.astype(complex)
+                
+            final_hop[indR0] += h_soc_onsite
+
+        # Write to file
+        # We write to current directory (state.current_directory)
+        # But DataManager doesn't know about `state.current_directory`.
+        # We can just write to where `hrfile` was, or accept a path.
+        # Let's assume we write to the same directory as the loaded HR file.
+        hr_path = self.data_dict.get('hrfile', 'wannier90_hr.dat')
+        out_dir = os.path.dirname(os.path.abspath(hr_path))
+        
+        write_hr(out_dir, final_hop, self.data_dict['Rlatt'])
+        return os.path.join(out_dir, 'wannier90_hr_plus_soc.dat')

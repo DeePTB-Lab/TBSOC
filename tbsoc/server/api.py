@@ -156,6 +156,14 @@ async def get_tb_bands(req: TBBandsRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.post("/save-hr")
+async def save_hr(req: TBBandsRequest):
+    try:
+        path = state.data_manager.save_hr_file(req.lambdas)
+        return {"message": "Success", "path": path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.get("/files")
 async def list_files():
     """List files in the current working directory."""

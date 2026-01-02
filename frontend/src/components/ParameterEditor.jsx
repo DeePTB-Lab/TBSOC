@@ -153,6 +153,24 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
       .catch(console.error);
   }
 
+  const handleSaveHR = () => {
+      fetch('/api/save-hr', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(formData)
+      })
+      .then(res => res.json())
+      .then(data => {
+          if (data.path) {
+              alert(`Saved to: ${data.path}`);
+          } else {
+              // Usually error handled in catch or by check
+              if (data.detail) alert("Failed: " + data.detail);
+          }
+      })
+      .catch(err => alert("Error: " + err));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     onRunFit(formData);
@@ -273,6 +291,7 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
 
         <div style={{display: 'flex', gap: '10px', marginTop: '30px'}}>
              <button type="button" onClick={handlePreview} style={{flex: 1, background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)'}}>Preview Bands</button>
+             <button type="button" onClick={handleSaveHR} style={{flex: 1, background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)'}}>Export HR</button>
              {isFitting ? (
                  <button type="button" onClick={onStopFit} style={{flex: 1, background: '#ff6b6b', fontWeight: 'bold'}}>Stop Fitting</button>
              ) : (
