@@ -272,7 +272,7 @@ function App() {
       </header>
       
       <div style={{display: 'flex', gap: '20px', flex: 1, minHeight: 0}}>
-          <div style={{flex: '0 0 400px', minWidth: '350px'}}>
+          <div style={{flex: '0 0 200px', minWidth: '300px'}}>
             <ParameterEditor 
                 onRunFit={runFit} 
                 onPreview={handlePreview} 

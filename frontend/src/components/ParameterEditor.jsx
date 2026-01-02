@@ -164,11 +164,11 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
             <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '10px', color: 'var(--text-secondary)'}}>Fitting Weights</h3>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
             <label>
-                <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Fermi Energy (eV)</span>
+                <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>E_Fermi (eV)</span>
                     <input type="number" step="0.01" name="Efermi" value={formData.Efermi} onChange={handleChange} />
             </label>
             <label>
-                    <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Weight Sigma (eV)</span>
+                    <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Weight σ (eV)</span>
                     <input type="number" step="0.1" name="weight_sigma" value={formData.weight_sigma} onChange={handleChange} />
             </label>
             </div>
@@ -204,18 +204,20 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
                     );
                 })}
                 </div>
-                <button type="button" onClick={addLambda} style={{width: '100%', marginTop: '5px', padding: '8px', background: 'var(--button-bg)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', borderRadius: '4px'}}>+ Add Optimization Parameter</button>
+                <button type="button" onClick={addLambda} style={{width: '100%', marginTop: '5px', padding: '8px', background: 'var(--button-bg)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', borderRadius: '4px'}}>+ Add λ</button>
             </div>
         </div>
 
-        <div style={{display: 'flex', gap: '10px', marginTop: '30px'}}>
-             <button type="button" onClick={handlePreview} style={{flex: 1, background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)'}}>Preview Bands</button>
-             <button type="button" onClick={handleSaveHR} style={{flex: 1, background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)'}}>Export HR</button>
-             {isFitting ? (
-                 <button type="button" onClick={onStopFit} style={{flex: 1, background: '#ff6b6b', fontWeight: 'bold'}}>Stop Fitting</button>
-             ) : (
-                 <button type="button" onClick={handleSubmit} style={{flex: 1, background: 'linear-gradient(45deg, #646cff, #42d392)', fontWeight: 'bold'}}>Start Fitting</button>
-             )}
+        <div style={{display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '30px'}}>
+             <div style={{display: 'flex', gap: '10px'}}>
+                 <button type="button" onClick={handlePreview} style={{flex: 1, background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', cursor: 'pointer'}}>Preview</button>
+                 {isFitting ? (
+                     <button type="button" onClick={onStopFit} style={{flex: 1, background: '#ff6b6b', color: 'white', fontWeight: 'bold', border: 'none', padding: '10px', borderRadius: '6px', cursor: 'pointer'}}>Stop</button>
+                 ) : (
+                     <button type="button" onClick={handleSubmit} style={{flex: 1, background: 'linear-gradient(45deg, #646cff, #42d392)', color: 'white', fontWeight: 'bold', border: 'none', padding: '10px', borderRadius: '6px', cursor: 'pointer'}}>Fitting</button>
+                 )}
+             </div>
+             <button type="button" onClick={handleSaveHR} style={{width: '100%', background: 'var(--button-bg)', color: 'var(--button-text)', border: '1px solid var(--border-color)', padding: '10px', borderRadius: '6px', cursor: 'pointer'}}>Export HR</button>
         </div>
     </form>
   );
