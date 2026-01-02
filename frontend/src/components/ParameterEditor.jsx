@@ -161,6 +161,7 @@ export default function ParameterEditor({ onRunFit, onPreview, externalLambdas, 
   return (
     <form className="card" style={{height: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', margin: 0}}>
         <div style={{flex: 1}}>
+            <h3 style={{fontSize: '1rem', marginTop: 0, marginBottom: '10px', color: 'var(--text-secondary)'}}>Fitting Weights</h3>
             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px'}}>
             <label>
                 <span style={{fontSize: '0.85rem', display: 'block', marginBottom: '4px'}}>Fermi Energy (eV)</span>
