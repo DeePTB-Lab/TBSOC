@@ -7,10 +7,12 @@ import matplotlib.pyplot as plt
 import time
 import matplotlib as mpl
 mpl.rcParams['pdf.fonttype'] = 42
-
+import os
 
 def band_plot(Efermi, EMIN, EMAX, xpath, xsymm, plot_sbol, bndtb, pl_tb=True, pl_vasp=False, bndvasp=0,savedir='./'):
     """Plot band structure."""
+    if not os.path.exists(savedir):
+        os.makedirs(savedir, exist_ok=True)
     fonts=12
 
     plt.figure(figsize=(8,7))
@@ -39,4 +41,3 @@ def band_plot(Efermi, EMIN, EMAX, xpath, xsymm, plot_sbol, bndtb, pl_tb=True, pl
     np.savetxt(f'{savedir}/bands_soc.dat', bndtb)
 
     return 0
-       

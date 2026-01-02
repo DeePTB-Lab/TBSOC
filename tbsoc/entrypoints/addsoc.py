@@ -15,13 +15,37 @@ def addsoc(INPUT,outdir='./', **kwargs):
     jdata = j_loader(INPUT)
     data_dict = load_all_data(**jdata)
 
-    lambdas = jdata.get('lambdas',None)
-    assert len(lambdas) == data_dict['num_interaction']
-    train_lambda = [True]*len(lambdas)
-    for ii in range(len(lambdas)):
-        if ii is None:
-            lambdas[ii] = 0.0
-            train_lambda[ii] = False
+    # Robust lambda parsing (same as fitsoc)
+    raw_lambdas = jdata.get('lambdas')
+    orb_labels = data_dict.get('orb_labels', [])
+
+    if isinstance(raw_lambdas, dict):
+        # Convert dict to array based on orb_labels order
+        if not orb_labels:
+            raise ValueError("Orbital labels missing in data, but lambdas provided as dict.")
+        
+        lambdas = np.zeros(len(orb_labels))
+        for i, label in enumerate(orb_labels):
+            val = raw_lambdas.get(label)
+            if val is None:
+                 # Check if it is an s-orbital
+                 orbital_type = label.split(':')[1] if ':' in label else label
+                 if orbital_type == 's':
+                     val = 0.0
+                 else:
+                     print(f"Warning: No initial value for {label} in input. Defaulting to 0.")
+                     val = 0.0
+            lambdas[i] = val
+    elif isinstance(raw_lambdas, list):
+        lambdas = np.array(raw_lambdas)
+    elif raw_lambdas is None:
+        print("Warning: No lambdas provided in input. Using zeros.")
+        lambdas = np.zeros(len(orb_labels)) if orb_labels else np.zeros(data_dict['num_interaction'])
+    else:
+        raise ValueError("Invalid format for 'lambdas' in input.json. Must be list or dict.")
+
+    if len(lambdas) != data_dict['num_interaction']:
+         print(f"Warning: Lambda length {len(lambdas)} != num_interaction {data_dict['num_interaction']}")
 
     orbitals = data_dict["orbitals"]
     orb_type = data_dict["orb_type"]
