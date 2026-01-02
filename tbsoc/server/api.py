@@ -159,7 +159,7 @@ async def get_tb_bands(req: TBBandsRequest):
 @router.post("/save-hr")
 async def save_hr(req: TBBandsRequest):
     try:
-        path = state.data_manager.save_hr_file(req.lambdas)
+        path = state.data_manager.save_hr_file(req.lambdas, output_dir=state.current_directory)
         return {"message": "Success", "path": path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

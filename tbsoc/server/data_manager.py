@@ -210,7 +210,7 @@ class DataManager:
             
         return {"bands": eigvals.T.tolist(), "mae": None, "offset": getattr(self, 'best_offset', 0)}
 
-    def save_hr_file(self, lambdas_list):
+    def save_hr_file(self, lambdas_list, output_dir=None):
         if self.data_dict is None:
             raise ValueError("Data not loaded")
             
@@ -295,9 +295,12 @@ class DataManager:
         # We write to current directory (state.current_directory)
         # But DataManager doesn't know about `state.current_directory`.
         # We can just write to where `hrfile` was, or accept a path.
-        # Let's assume we write to the same directory as the loaded HR file.
-        hr_path = self.data_dict.get('hrfile', 'wannier90_hr.dat')
-        out_dir = os.path.dirname(os.path.abspath(hr_path))
+        # Use provided output_dir or fallback to hrfile location
+        if output_dir:
+            out_dir = output_dir
+        else:
+            hr_path = self.data_dict.get('hrfile', 'wannier90_hr.dat')
+            out_dir = os.path.dirname(os.path.abspath(hr_path))
         
         write_hr(out_dir, final_hop, self.data_dict['Rlatt'])
         return os.path.join(out_dir, 'wannier90_hr_plus_soc.dat')
