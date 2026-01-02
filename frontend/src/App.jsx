@@ -44,9 +44,16 @@ function App() {
   
   // Working Directory State (Lifted from ParameterEditor)
   const [currentPath, setCurrentPath] = useState('');
+  const [appVersion, setAppVersion] = useState('');
 
   // Initial Data Load
   React.useEffect(() => {
+    // Load Version
+    fetch('/api/version')
+        .then(res => res.json())
+        .then(data => setAppVersion(`v${data.version}`))
+        .catch(console.error);
+
     // Load Theme
     fetch(`/themes/${currentTheme.toLowerCase()}.json`)
       .then(res => res.json())
@@ -175,7 +182,7 @@ function App() {
                 TBSOC <span style={{fontWeight: '400', opacity: 0.7}}>Desktop</span>
              </div>
              {/* Version Badge */}
-             <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '1px 6px', borderRadius: '4px'}}>v0.1.0</span>
+             <span style={{fontSize: '0.75rem', color: 'var(--text-secondary)', border: '1px solid var(--border-color)', padding: '1px 6px', borderRadius: '4px'}}>{appVersion || 'v...'}</span>
         </div>
         
         {/* Center: Working Directory */}

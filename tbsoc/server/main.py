@@ -5,9 +5,10 @@ import os
 import threading
 import webview
 import sys
+from tbsoc import __version__
 
 # Create the FastAPI app
-app = FastAPI(title="TBSOC Desktop", version="0.1.0")
+app = FastAPI(title="TBSOC", version=__version__)
 
 # Allow CORS for development
 app.add_middleware(
@@ -25,6 +26,10 @@ app.include_router(api_router, prefix="/api")
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+@app.get("/api/version")
+def get_version():
+    return {"version": __version__}
 
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -61,7 +66,7 @@ def start_desktop_app():
     time.sleep(1) 
     
     # Create and register window
-    window = webview.create_window('TBSOC Desktop', 'http://127.0.0.1:8000/', width=1000, height=600)
+    window = webview.create_window('TBSOC', 'http://127.0.0.1:8000/', width=1000, height=600)
     state.window = window
     
     webview.start(debug=False)
